@@ -196,8 +196,11 @@ class MainApp(QMainWindow):
         try:
             with open(r'Kontrola_wersji\v0_9_3\ftp_dane.txt', 'r') as file:
                 address, user, password = [line.strip() for line in file]
+            
+            port = 5000
 
-            with FTP(address) as ftp:
+            with FTP() as ftp:
+                ftp.connect(host=address, port=port)
                 ftp.login(user, password)
                 ftp.retrlines('LIST', self.updateResult)
         except Exception as e:
