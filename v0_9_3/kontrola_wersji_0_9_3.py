@@ -2,7 +2,7 @@ import os
 import shutil
 from PyQt5.QtWidgets import QTextEdit ,QListWidgetItem  ,QApplication, QMainWindow, QPushButton, QLabel, QListWidget, QVBoxLayout, QHBoxLayout, QWidget, QDesktopWidget, QLineEdit, QDialog, QSystemTrayIcon, QMenu, QAction
 from PyQt5.QtGui import QIcon, QDragEnterEvent, QDropEvent
-from qfunctions import app_process, process_active, aktywuj_simpack_pre_i_otworz_plik, simpack_pre_active
+from qfun import app_process, process_active, aktywuj_simpack_pre_i_otworz_plik, simpack_pre_active
 from PyQt5.QtCore import Qt, QTimer
 import pygetwindow as gw
 import datetime
@@ -73,8 +73,17 @@ class MainApp(QMainWindow):
 
     def initUI(self):
         self.setWindowTitle("Kontrola wersji - v0.9.2")
-        self.setGeometry(0, 0, 500, 300)  # tymczasowa geometria
-        self.setWindowPosition()  
+        self.setGeometry(0, 0, 400, 300)  # tymczasowa geometria
+        
+        screenSize = QDesktopWidget().screenGeometry()
+        windowSize = self.geometry()
+
+        # Obliczanie nowych współrzędnych x i y
+        x = screenSize.width() - windowSize.width()
+        y = screenSize.height() - windowSize.height()
+
+        # Ustawianie nowej pozycji okna
+        self.move(x, y-200)
 
         self.setWindowIcon(QIcon(r"Kontrola_wersji_v_0_6\wrench-solid.ico"))
         self.setWindowFlags(self.windowFlags() | Qt.WindowStaysOnTopHint)
@@ -185,7 +194,7 @@ class MainApp(QMainWindow):
 
     def connectToFtp(self):
         try:
-            with open('ftp_dane.txt', 'r') as file:
+            with open(r'Kontrola_wersji\v0_9_3\ftp_dane.txt', 'r') as file:
                 address, user, password = [line.strip() for line in file]
 
             with FTP(address) as ftp:
