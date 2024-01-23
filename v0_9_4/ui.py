@@ -7,6 +7,7 @@ import pygetwindow as gw
 import datetime
 from ftplib import FTP
 from config import WINDOW_ICON
+from logic import aktywuj_simpack_pre_i_otworz_plik, app_process, process_active, simpack_pre_active
 
 # Tutaj importujesz inne niezbędne moduły, na przykład qfun, pygetwindow, itp.
 
@@ -247,6 +248,7 @@ class MainApp(QMainWindow):
         self.timer.start(1000)  # Sprawdzanie co sekundę
 
     def update_status(self):
+        global simpack_pre_active
         if process_active.is_set():
             self.status_label.setText("Stan procesu: Aktywny")
             self.status_label.setStyleSheet("color: red;")
