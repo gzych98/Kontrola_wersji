@@ -1,3 +1,4 @@
+from ftplib import FTP
 import random
 from PyQt5.QtWidgets import QDialog, QVBoxLayout, QLabel, QTextEdit, QPushButton
 import os
@@ -16,7 +17,114 @@ process_active = threading.Event()
 simpack_pre_active = threading.Event()
 
 
-def app_process(listbox, info_label, mainWindow, process_args, solver):
+def upload_to_ftp(listbox, info_label, solver_path):
+    # 1. Tworzenie archiwum ZIP
+    zip_file_path = simpack_standalone_zip(listbox)
+
+    # 2. Łączenie z FTP
+    ftp_connection = ftp_connect()
+    if isinstance(ftp_connection, str):
+        return ftp_connection  # Jeśli zwrócony został string, oznacza to błąd
+
+    # 3. Wysyłanie pliku
+    upload_result = ftp_send_file(zip_file_path, ftp_connection)
+
+    ftp_connection.quit()  # Zamykanie połączenia
+
+    return upload_result
+
+
+def simpack_standalone_zip(file_path):
+    ...
+
+
+def ftp_connect():
+    # ftp_details to słownik lub obiekt zawierający dane do logowania, np. {'host': ..., 'port': ..., 'user': ..., 'password': ...}
+    ftp_details = {'host': ..., 'port': ..., 'user': ..., 'password': ...}
+    try:
+        ftp = FTP()
+        ftp.connect(ftp_details['host'], ftp_details['port'])
+        ftp.login(ftp_details['user'], ftp_details['password'])
+        return ftp  # Zwracamy obiekt połączenia FTP
+    except Exception as e:
+        # Zwracamy opis błędu, jeśli połączenie nie powiedzie się
+        return str(e)
+
+
+def ftp_send_file(file_path, ftp_connection):
+    # Zakładam, że ftp_connection to obiekt połączenia zwrócony przez ftp_connect
+    try:
+        with open(file_path, 'rb') as file:
+            ftp_connection.storbinary(f'STOR {file_path}', file)
+        return "Plik wysłany pomyślnie"
+    except Exception as e:
+        return str(e)
+
+
+def verify_selected_files(listbox, info_label):
+    selected_items = listbox.selectedItems()
+    if not selected_items:
+        info_label.setText("Wybierz plik")
+        return None
+    valid_files = []
+    for item in selected_items:
+        full_path = item.text()
+        if full_path.lower().endswith('.spck'):
+            valid_files.append(full_path)
+        else:
+            info_label.setText("To nie jest plik .spck")
+    return valid_files
+
+
+def prepare_arguments(files, process_args):
+    return [[process_args + [file]] for file in files]
+
+
+def create_log_path(file_path):
+    log_directory = os.path.join(os.path.dirname(file_path), "log")
+    os.makedirs(log_directory, exist_ok=True)
+    filename = os.path.basename(file_path)
+    return os.path.join(log_directory, f"{filename}_log.txt")
+
+
+def dialog_and_logging(main_window, file_path, log_file_path):
+    # Funkcja do obsługi dialogów i logowania
+    ...
+
+
+def start_analysis_thread(arguments, solver, output_queue):
+    threading.Thread(target=uruchom_analize, args=(
+        arguments, solver, 0, output_queue)).start()
+
+
+def process_output_thread(output_queue, log_file_path):
+    threading.Thread(target=process_output, args=(
+        output_queue, log_file_path)).start()
+
+# W funkcji app_process używamy tych nowych funkcji
+
+
+def app_process(listbox, info_label, main_window, process_args, solver):
+    files = verify_selected_files(listbox, info_label)
+    if not files:
+        return
+
+    arguments = prepare_arguments(files, process_args)
+    output_queue = queue.Queue()
+
+    for file_path, argument in zip(files, arguments):
+        log_file_path = create_log_path(file_path)
+        dialog_and_logging(main_window, file_path, log_file_path)
+        start_analysis_thread(argument, solver, output_queue)
+        process_output_thread(output_queue, log_file_path)
+
+    if process_active.is_set():
+        print("PROCES: Proces jest aktywny")
+    else:
+        print("PROCES: Proces nie jest aktywny")
+
+
+def app_process2(listbox, info_label, mainWindow, process_args, solver):
     selected_items = listbox.selectedItems()
     if not selected_items:
         info_label.setText("Wybierz plik")

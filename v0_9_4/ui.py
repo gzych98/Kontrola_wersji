@@ -7,7 +7,7 @@ import pygetwindow as gw
 import datetime
 from ftplib import FTP
 from config import WINDOW_ICON
-from logic import aktywuj_simpack_pre_i_otworz_plik, app_process, process_active, simpack_pre_active
+from logic import upload_to_ftp, aktywuj_simpack_pre_i_otworz_plik, app_process, process_active, simpack_pre_active
 
 # Tutaj importujesz inne niezbędne moduły, na przykład qfun, pygetwindow, itp.
 
@@ -98,6 +98,10 @@ class MainApp(QMainWindow):
         self.standalone_button_zip.clicked.connect(
             lambda: self.run_app_process(["--gen-standalone", "--zip", "--input-model"]))
 
+        self.send_serwer = QPushButton("Wyslij na serwer", self)
+        self.send_serwer.clicked.connect(
+            lambda: self.server_send_file(self))
+
         self.copy_button = QPushButton("Kopiuj", self)
         self.copy_button.clicked.connect(lambda: self.copy_model())
 
@@ -141,6 +145,9 @@ class MainApp(QMainWindow):
         buttons_layout_end = QHBoxLayout()
 
         serwer_layout = QHBoxLayout()
+        serwer_buttons = QVBoxLayout()
+
+        self.info_label = QLabel("", self)
 
         # buttons_layout.addWidget(self.add_button)
         buttons_layout.addWidget(self.open_simpack_button)
@@ -155,7 +162,9 @@ class MainApp(QMainWindow):
         buttons_layout_end.addWidget(self.minimize_button)
         buttons_layout_end.addWidget(self.close_button)
 
-        serwer_layout.addWidget(self.connectButton)
+        serwer_layout.addLayout(serwer_buttons)
+        serwer_buttons.addWidget(self.connectButton)
+        serwer_buttons.addWidget(self.send_serwer)
         serwer_layout.addWidget(self.resultField)
 
         main_layout = QVBoxLayout()
@@ -167,6 +176,7 @@ class MainApp(QMainWindow):
         main_layout.addLayout(buttons_layout_2)
         main_layout.addWidget(self.drag_drop_label)
         main_layout.addWidget(self.listbox)
+        main_layout.addWidget(self.info_label)
         main_layout.addLayout(serwer_layout)
         main_layout.addWidget(self.delete_button)
         main_layout.addLayout(buttons_layout_end)
@@ -240,6 +250,11 @@ class MainApp(QMainWindow):
         # Wywołanie funkcji app_process z odpowiednimi argumentami
         app_process(self.listbox, self.info_label,
                     self, process_args, solver_path)
+
+    def server_send_file(self):
+        solver_path = self.solver_path_edit.text()
+        upload_to_ftp(self.listbox, self.info_label,
+                      self, solver_path)
 
     def setup_monitoring(self):
         self.timer = QTimer(self)
