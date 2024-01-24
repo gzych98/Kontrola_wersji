@@ -34,8 +34,10 @@ def upload_to_ftp(listbox, info_label, solver_path):
     return upload_result
 
 
-def simpack_standalone_zip(file_path):
-    ...
+def simpack_standalone_zip(listbox, info_label, main_window, solver_path):
+    process_args = ["--gen-standalone", "--zip", "--input-model"]
+    app_process(listbox, info_label, main_window, process_args, solver_path)
+    return
 
 
 def ftp_connect():
