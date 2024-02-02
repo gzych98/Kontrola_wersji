@@ -27,6 +27,23 @@ with app.app_context():
     db.create_all()
 
 
+def label_items():
+    # Pobieranie aktualnej listy plików z bazy danych
+    current_files = FileLabel.query.order_by(FileLabel.order).all()
+    # Tworzenie zbioru istniejących ścieżek plików
+    existing_file_paths = set(f.file_path for f in current_files)
+    # Wyszukiwanie nowych plików w folderze UPLOAD
+    new_files = [f for f in os.listdir(app.config['UPLOAD_FOLDER'])
+                 if f.endswith(app.config['EXTENSION_LIST']) and f not in existing_file_paths]
+    for file in new_files:
+        # Dodawanie nowego rekordu
+        # Domyślnie label '2' dla nowych plików
+        new_record = FileLabel(file_path=file, file_label='2')
+        db.session.add(new_record)
+    # Zatwierdzanie zmian w bazie danych
+    db.session.commit()
+
+
 @app.route('/upload', methods=['POST'])
 def upload_file():
     if 'file' not in request.files:
